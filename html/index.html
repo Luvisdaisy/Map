@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>疫情信息平台</title>
+  <style>
+    /* 添加CSS样式 */
+    header {
+      color: #fff;
+      padding: 20px;
+      text-align: left;
+      margin-left: 30px;
+      font-size: 20px;
+    }
+
+    .top {
+      background-image: url("./imgs/top.jpg");
+      background-size: cover;
+    }
+
+    section {
+      padding: 50px;
+    }
+
+    #section1 {
+      height: 200px;
+      color: #fff;
+    }
+
+    section h1 {
+      margin-bottom: 20px;
+      font-size: 50px;
+    }
+
+    section h2 {
+      margin-bottom: 65px;
+      font-size: 35px;
+      padding: 10px;
+    }
+
+    #section3 {
+      background-color: #3e3d3d;
+    }
+
+    #section3 h2 {
+      color: rgb(255, 255, 255);
+    }
+
+    #section3 p {
+      color: rgb(255, 255, 255);
+    }
+
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      margin-bottom: 30px;
+    }
+
+    .column {
+      flex-basis: calc(50% - 20px);
+      margin-bottom: 20px;
+      width: 50%;
+      justify-content: center;
+    }
+
+    .column img {
+      width: 100%;
+      height: 100%;
+      margin-bottom: 10px;
+    }
+
+    .column p {
+      width: 100%;
+      padding: 10px;
+      font-size: 20px;
+    }
+
+    .column button {
+      width: 290px;
+      height: 90px;
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 5px;
+      background-color: #a3826c;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.5s ease;
+    }
+
+    .column button:hover {
+      background-color: #8e7462;
+    }
+
+    footer {
+      background-color: #efefee;
+      color: rgb(0, 0, 0);
+      padding: 10px;
+      text-align: center;
+      font-size: 16px;
+    }
+
+    .fade-in {
+      opacity: 0;
+      transition: opacity 1s ease;
+    }
+
+    .feature-4 {
+      width: auto;
+      margin-top: 150px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="top">
+    <header>
+      <h1>疫情信息平台</h1>
+    </header>
+
+    <section id="section1">
+      <div class="container">
+        <h1>帮助个体和集体客户利用用户画像获取</h1>
+        <h1>最新疫情大数据并借助地图导航实现风险规避</h1>
+      </div>
+    </section>
+  </div>
+
+  <section id="section2">
+    <div class="container">
+      <div class="row">
+        <div class="column">
+          <h1>为日常生活生产提供信息支持</h1>
+        </div>
+        <div class="column">
+          <p>
+            大数据、地图导航和人物画像在防疫中扮演着至关重要的角色。
+          </p>
+          <p>
+            大数据可以帮助分析病毒传播的趋势和规律，从而帮助制定更有效的防疫策略；地图导航可以帮助监控人员流动情况，及时发现可能存在的疫情风险区域，并采取相应的措施；人物画像则可以对疫情的相关人员进行分类和识别，有助于追踪和隔离感染者，防止疫情扩散。
+          </p>
+          <p>
+            因此，这些技术和工具在防疫中的作用不容小觑，可以有效提高防疫效果，保护人民的生命安全和身体健康。
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="section3">
+    <div class="container">
+      <div class="row">
+        <div class="column">
+          <img id="feature-1" class="fade-in" src="./imgs/1.jpg" alt="Feature 1">
+        </div>
+        <div class="column">
+          <h2>疫情数据</h2>
+          <p>
+            这是一个功能强大的疫情大数据平台，提供全国各省及地市的疫情数据查询功能。您可以轻松查看全国范围内的疫情状况、趋势和变化，深入了解各个省份和城市的疫情情况和防控措施。同时，平台还提供了多种数据展示方式，包括地图、表格、图表等，让您可以更加直观地了解疫情数据。
+          </p>
+          <button onclick="toVisualMap()">了解更多</button>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="column">
+          <h2>疫情地图</h2>
+          <p>
+            这个疫情地图功能不仅具备普通地图的功能，还提供了一个非常实用的功能：查询附近的疫情风险区域。通过该功能，您可以快速了解自己所在区域和周边区域的疫情风险程度，以便更好地做出防控决策和行动。这个疫情地图功能是一个非常实用和便捷的工具，可以帮助您更好地了解周边疫情风险情况，及时采取相应的防控措施，保护自己和身边的人。
+          </p>
+          <button onclick="toNavMap()">了解更多</button>
+        </div>
+        <div class="column">
+          <img id="feature-2" class="fade-in" src="./imgs/2.jpg" alt="Feature 2">
+        </div>
+      </div>
+    </div>
+  </section>
+  <section id="section4">
+    <div class="container">
+      <h1>“我们的目标是让技术更好地服务于社会”</h1>
+      <img class="feature-3" src="./imgs/bottom.jpg" alt="Feature 3">
+    </div>
+  </section>
+
+  <footer>
+    <p>&copy;河南大学 </p>
+  </footer>
+</body>
+<script>
+  function fadeInOnScroll(images) {
+    window.addEventListener("scroll", () => {
+      images.forEach((img) => {
+        if (isScrolledIntoView(img)) {
+          img.style.opacity = 1;
+        }
+      });
+    });
+
+    function isScrolledIntoView(el) {
+      const rect = el.getBoundingClientRect();
+      const elemTop = rect.top;
+      const elemBottom = rect.bottom;
+
+      const isVisible = elemTop < window.innerHeight && elemBottom >= 0;
+      return isVisible;
+    }
+  }
+  const feature1 = document.getElementById("feature-1");
+  const feature2 = document.getElementById("feature-2");
+
+
+  const images = [feature1, feature2];
+
+  fadeInOnScroll(images);
+
+  function toVisualMap() {
+    window.open("./中国疫情可视化_draggable.html", "_blank")
+  }
+  function toNavMap() {
+    window.open("./route_map.html", "_blank")
+  }
+</script>
+
+</html>

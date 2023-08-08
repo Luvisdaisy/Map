@@ -1,0 +1,491 @@
+<!--
+ * @Author       : Tian Haotian qi_7ran@163.com
+ * @Date         : 2023-02-05 13:36:17
+ * @LastEditors  : Tian Haotian qi_7ran@163.com
+ * @LastEditTime : 2023-05-05 10:32:21
+ * @FilePath     : \VSCodePros\Covid_19_Project\html\route_map.html
+ * @Description  :
+-->
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no, width=device-width">
+    <title>地图路线分析</title>
+    <link rel="stylesheet" href="./map.css">
+    <script>
+        // 高德地图秘钥，必须在加载JSAPI load.js文件之前
+        window._AMapSecurityConfig = {
+            securityJsCode: "40a9746443f2c3b4611bf4fd8e3c9d07"  // 开发环境使用
+        };
+    </script>
+
+    <link rel="stylesheet" href="https://a.amap.com/jsapi_demos/static/demo-center/css/demo-center.css"/>
+    <script src="https://a.amap.com/jsapi_demos/static/demo-center/js/demoutils.js"></script>
+    <script type="text/javascript"
+            src="https://webapi.amap.com/maps?v=2.0&key=13e29c1f377aeb1ee4a3ceb8ccf35ac2&plugin=AMap.Transfer,AMap.AutoComplete,AMap.StationSearch,AMap.CitySearch,AMap.ToolBar,AMap.Geocoder,AMap.CircleEditor,AMap.GeometryUtil"></script>
+    <script type="text/javascript" src="https://cache.amap.com/lbs/static/addToolbar.js"></script>
+    <base href="https://webapi.amap.com/ui/1.1/ui/control/BasicControl/examples/"/>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+
+<body>
+<div id="container"></div>
+
+<!-- 侧栏菜单 -->
+<div id="mySidenav" class="sidenav">
+    <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+    <a onclick="openSearch()">地图导航</a>
+    <a onclick="stationSearch()">交通站点</a>
+    <a onclick="searchAround()">娱乐场所</a>
+    <a onclick="showRisks()">风险区域</a>
+</div>
+<span style="font-size:30px;cursor:pointer;font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;"
+      onclick="openNav()">&#9776; Menu</span>
+<!-- 模态框 -->
+<div id="myModal" class="modal" style="display: none;">
+    <!-- 模态框内容 -->
+    <div class="modal-content">
+        <div class="modal-header">
+            <span class="close">&times;</span>
+            <h2>路线搜索</h2>
+        </div>
+        <!-- 路线搜索 -->
+        <div class="modal-body">
+            <p class="dtdh" style="margin-top: 10px;">起点：</p>
+            <input type="text" name="" id="startNode" class="tx" style="width:75% ;"/><br>
+
+            <p class="dtdh" style="margin-top: 10px;">终点：</p>
+            <input type="text" name="" id="endNode" class="tx" style="width:75% ;"/><br><br>
+            <button id="searchBtn"><span>开始导航</span></button>
+        </div>
+        <div class="modal-footer" id="modal-footer">
+            <h3>等待检索...</h3>
+        </div>
+    </div>
+</div>
+
+<!-- 站点查询信息 -->
+<div id="panel"></div>
+
+<!-- 风险信息 -->
+<div id="riskInfo" style="display: none;">
+    <h1 id="riskLevel"></h1>
+    <h3 id="msg"></h3>
+    <button id="ok" onclick="infoOk()" style="display: none;">确定</button>
+</div>
+
+<!--站点查询输入-->
+<div id="tip" class='info' style='min-width:18rem;'></div>
+
+<div class="input-card" style='width:18rem; margin-right: 300px;'>
+    <label style='color:grey'>公交站点查询</label>
+    <div class="input-item">
+        <div class="input-item-prepend"><span class="input-item-text">站名</span></div>
+        <input id='stationKeyWord' type="text" value="东门">
+    </div>
+</div>
+
+<script>
+
+</script>
+<script>
+
+    //打开路线搜索模态框
+    function openSearch() {
+        var modal = document.getElementById("myModal");
+        var span = document.getElementsByClassName("close")[0];
+        modal.style.display = "block";
+        span.onclick = function () {
+            modal.style.display = "none";
+        }
+        window.onclick = function (event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+    }
+
+    // 侧边导航控制
+    function openNav() {
+        document.getElementById("mySidenav").style.width = "250px";
+        document.getElementById("main").style.marginLeft = "250px";
+    }
+
+    function closeNav() {
+        document.getElementById("mySidenav").style.width = "0";
+        document.getElementById("main").style.marginLeft = "0";
+    }
+
+    let myPos
+    let myCity = '开封';
+    let map = new AMap.Map('container', {
+        center: [114.308951, 34.817022],
+        layers: [//只显示默认图层的时候，layers可以缺省
+            AMap.createDefaultLayer()//高德默认标准图层
+        ],
+        zoom: 11,
+        resizeEnable: true,
+        // animateEnable: false // 取消地图动画
+    });
+
+    //插件
+    AMap.plugin([
+        'AMap.ToolBar',
+        'AMap.Scale',
+        'AMap.HawkEye',
+        'AMap.MapType',
+        'AMap.Geolocation',
+        'AMap.CitySearch'
+
+    ], function () {
+
+        // 在图面添加比例尺控件
+        map.addControl(new AMap.Scale());
+
+        // 在图面添加鹰眼控件
+        map.addControl(new AMap.HawkEye({isOpen: true}));
+
+        // 在图面添加类别切换控件
+        map.addControl(new AMap.MapType({offset: [50, 0]}));
+
+        // 添加定位工具
+        let geolocation = new AMap.Geolocation({
+            enableHighAccuracy: true,
+            timeout: 10000,
+            offset: [10, 20],
+            zoomToAccuracy: true,
+            buttonPosition: 'RB',
+            convert: true,
+            showButton: false,
+        });
+        map.addControl(geolocation);
+        geolocation.getCurrentPosition(function (status, result) {
+            if (status == 'complete') {
+                console.log(result.message);
+                myPos = [result.position.lng, result.position.lat];
+            }
+        })
+        //实例化城市查询类
+        var citysearch = new AMap.CitySearch();
+        //自动获取用户IP，返回当前城市
+        citysearch.getLocalCity(function (status, result) {
+            if (status === 'complete' && result.info === 'OK') {
+                if (result && result.city && result.bounds) {
+                    myCity = result.city;
+                }
+            } else {
+                console.log('城市定位失败')
+            }
+        });
+    });
+
+
+    new AMap.AutoComplete({
+        input: 'startNode'
+    });
+    new AMap.AutoComplete({
+        input: 'endNode'
+    });
+    var searchBtn = document.getElementById("searchBtn");
+    searchBtn.onclick = function () {
+        new AMap.Transfer({
+            map: map,
+            panel: 'panel'
+        }).search([
+            {keyword: startNode.value, city: myCity},
+            {keyword: endNode.value, city: myCity}
+        ], function (status, data) {
+            console.log(status, data);
+            if (status == 'error') {
+                alert('无法找到该地点！')
+            }
+            document.getElementById('modal-footer').innerHTML = `${status}`.toUpperCase()
+        })
+
+    };
+
+    //
+    function stationSearch() {
+        removeMarkers();
+        let stationKeyWord = document.getElementById('stationKeyWord').value
+        if (!stationKeyWord) return
+        //实例化公交站点查询类
+        let station = new AMap.StationSearch({
+            pageIndex: 1,
+            pageSize: 60,
+            city: myCity   //确定搜索城市
+        });
+        station.search(stationKeyWord, function (status, result) {
+            if (status === 'complete' && result.info === 'OK') {
+                stationSearch_CallBack(result);
+            } else {
+                document.getElementById('tip').innerHTML = JSON.stringify(result);
+            }
+        });
+    }
+
+    /*公交站点查询返回数据解析*/
+    function stationSearch_CallBack(searchResult) {
+        let stationArr = searchResult.stationInfo;
+        let searchNum = stationArr.length;
+        if (searchNum > 0) {
+            document.getElementById('tip').innerHTML = '查询结果：共' + searchNum + '个相关站点';
+            for (let i = 0; i < searchNum; i++) {
+                let marker = new AMap.Marker({
+                    icon: new AMap.Icon({
+                        image: 'https://a.amap.com/jsapi_demos/static/resource/img/pin.png',
+                        size: new AMap.Size(32, 32),
+                        imageSize: new AMap.Size(32, 32)
+                    }),
+                    offset: new AMap.Pixel(-16, -32),
+                    position: stationArr[i].location,
+                    map: map,
+                    title: stationArr[i].name
+                });
+                marker.info = new AMap.InfoWindow({
+                    content: stationArr[i].name,
+                    offset: new AMap.Pixel(0, -30)
+                });
+                marker.on('mouseover', function (e) {
+                    e.target.info.open(map, e.target.getPosition())
+                })
+            }
+            map.setFitView();
+        }
+    }
+
+    let pois = [];//周边搜索的数据
+    let marker = []
+
+    // 周边搜索
+    function searchAround() {
+        removeMarkers();
+        if (!myPos) {
+            alert("无法确定您的位置，请先定位！")
+        } else {
+            let data = {
+                key: "04640e136bccb65c7c9a5fc3edfc4a8b",
+                location: myPos.toString(),
+                radius: 10000,
+                offset: 20,
+                page: 1,
+                keywords: "景点",
+            };
+            axios.request({
+                url: "https://restapi.amap.com/v3/place/around",
+                method: "get",
+                params: data
+            }).then((res) => {
+                console.log("检索完成");
+                // 创建地图
+                pois = res.data.pois;
+                setMarkers(res.data.pois);
+            });
+        }
+
+    }
+
+    // 生成点标记
+    function setMarkers(pois) {
+        markers = pois.map((poi, i) => {
+            marker = new AMap.Marker({
+                title: poi.name,
+                position: poi.location.split(","),
+                content: `<div class="marker">
+                        <img height="50px" src="https://img.tukuppt.com/ad_preview/00/08/06/0uWcHZKOUg.jpg!/fw/260" />
+                        <p style="font-weight:bold;color:red;" >${poi.name}</p>
+                        </div>`,
+                extData: poi.id,
+            });
+
+            return marker;
+        });
+
+        map.clearMap();
+        map.add(markers);
+        map.setFitView();
+    }
+
+    // 删除点标记
+    function removeMarkers() {
+        map.clearMap();
+    }
+</script>
+<script type="text/javascript">
+    function onshowclick() {
+        let stype = document.getElementById("search").style.display
+        if (stype == "block") {
+            document.getElementById("search").style.display = "none"
+        } else {
+            document.getElementById("search").style.display = "block"
+        }
+    }
+
+
+    function showRisks() {
+        removeMarkers();
+        if (!myPos) {
+            alert("定位以获取更多风险信息！");
+            return;
+        }
+
+        let addresses = [];
+        markers = [];
+
+        //地理编码
+        let geocoder = new AMap.Geocoder({
+            city: "全国",
+        });
+
+        addresses = getAddresses(addresses);
+        geocoder.getLocation(addresses, function (status, result) {
+            if (status === 'complete' && result.geocodes.length) {
+                let icon = new AMap.Icon({
+                    size: new AMap.Size(40, 40),
+                    image: "https://cdn.pixabay.com/photo/2012/04/13/19/27/warning-33364_640.png",
+                    imageSize: new AMap.Size(40, 40)
+                });
+                for (let i = 0; i < result.geocodes.length; i += 1) {
+                    let marker = new AMap.Marker({
+                        icon: icon,
+                        position: result.geocodes[i].location,
+                        title: addresses[i],
+                        extData: {
+                            address: result.geocodes[i].formattedAddress,
+                            level: result.geocodes[i].level
+                        }
+                    });
+                    markers.push(marker);
+                }
+                map.add(markers);
+                map.setCenter(myPos);
+                const circle = drawCircle();
+                //关键点：在圆圈生成之后才判断范围
+                setTimeout(function () {
+                    riskNearBy(markers, circle);
+                }, 1000)
+
+            }
+        });
+
+    }
+
+    function drawCircle() {
+
+        const circle = new AMap.Circle({
+            center: myPos,
+            radius: 400,
+            borderWeight: 3,
+            strokeColor: "#FF33FF",
+            strokeWeight: 6,
+            strokeOpacity: 0.2,
+            fillOpacity: 0.4,
+            strokeStyle: 'dashed',
+            strokeDasharray: [10, 10],
+            fillColor: '#1791fc',
+            zIndex: 50,
+        })
+        map.add(circle);
+        map.setFitView([circle]);
+
+        return circle
+    }
+
+    function getAddresses(addrs) {
+        SendXMLHttpRequest()
+        addrs = ToJSON();
+        return (addrs);
+    }
+
+    function riskNearBy(ms, circle) {
+        let data = {
+            count: 0,
+            msgTitle: '标题',
+            msgContent: '内容'
+        }
+        let domTitle = document.getElementById('riskLevel');
+        let domContent = document.getElementById('msg');
+
+        for (let index = 0; index < ms.length; index++) {
+            let markerPos = ms[index].getPosition();
+            let inCircle = circle.contains(markerPos);
+
+            const {address} = ms[index].getExtData()
+            console.log(`${address} ${inCircle}`)
+
+            if (inCircle) {
+                data.count++;
+            }
+        }
+        console.log(`风险区域: ${data.count}`)
+        if (data.count === 0) {
+            data.msgTitle = '风险等级：低';
+            data.msgContent = '您附近没有风险区域，但出行仍要注意防护';
+
+        } else if (data.count > 0 && data.count < 3) {
+            data.msgTitle = '风险等级：低';
+            data.msgContent = '您附近存在较少风险区域，出行请注意防护';
+        } else if (data.count > 2 && data.count < 6) {
+            data.msgTitle = '风险等级：中';
+            data.msgContent = '您附近存在一些风险区域，请做好防护并适当减少出行';
+        } else if (data.count >= 6) {
+            data.msgTitle = '风险等级：高';
+            data.msgContent = '您附近存在较多风险区域，请尽可能避免出行';
+        }
+
+        domTitle.innerHTML = `风险区域: ${data.count} \n` + data.msgTitle;
+        domContent.innerHTML = data.msgContent;
+
+        let rtype = document.getElementById("riskInfo").style.display;
+        if (rtype == "block") {
+            document.getElementById("riskInfo").style.display = "none"
+        } else {
+            document.getElementById("riskInfo").style.display = "block"
+        }
+
+        let btype = document.getElementById("ok").style.display;
+        if (btype == "block") {
+            document.getElementById("ok").style.display = "none"
+        } else {
+            document.getElementById("ok").style.display = "block"
+        }
+    }
+
+    function infoOk() {
+        removeMarkers();
+        document.getElementById("riskInfo").style.display = "none";
+        document.getElementById("ok").style.display = "none";
+    }
+
+    var responsecontent;
+
+    //发送HTTP请求的函数
+    function SendXMLHttpRequest() {
+        var xmlhttp,
+            url = "http://supplier.api.yesapi.cn/sandbox/?s=SVIP.Swxqi7ran_MyApiSandbox.AGetAddress&return_data=0&app_key=2358167B92E383B53A17DAA8BDB0275B&sign=25B7D74F8B15E5D247DB80751B017EC2";
+        if (window.XMLHttpRequest) {
+            xmlhttp = new XMLHttpRequest();
+        } else {
+            xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+        }
+        xmlhttp.onreadystatechange = function () {
+            if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                responsecontent = xmlhttp.responseText;
+            }
+        }
+        xmlhttp.open("POST", url, true);
+        xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+        xmlhttp.send("Id=" + "string" + "&Name=" + "string" + "&X=" + "123" + "&Y=" + "456" + "&Num=" + "0" + "&Note=" + "string" + "&Attachment=" + "string" + "&CreateTime=" + "2022-07-19T15:33:28.504Z" + "&UpdateTime=" + "2022-07-19T15:33:28.504Z");
+    }
+
+    //将请求结果转为json格式的函数
+    function ToJSON() {
+        console.log(responsecontent);
+        var Res = JSON.parse(responsecontent, null, 3);
+        return (Res.data.content.split(','));
+    }
+</script>
+</body>
+</html>
